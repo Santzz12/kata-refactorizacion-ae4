@@ -1,0 +1,96 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+
+abstract class Usuario {
+  - id : UUID
+  - nombre : String
+  - email : String
+  + getId() : UUID
+  + getNombre() : String
+  + getEmail() : String
+}
+
+class Estudiante {
+  - carrera : String
+  + getCarrera() : String
+}
+
+class Docente {
+  - especialidad : String
+  - horarios : List<HorarioDisponible>
+  + publicarHorario(inicio, fin) : HorarioDisponible
+  + getHorarios() : List<HorarioDisponible>
+}
+
+class HorarioDisponible {
+  - id : UUID
+  - docente : Docente
+  - inicio : LocalDateTime
+  - fin : LocalDateTime
+  - reservado : boolean
+  + estaDisponible() : boolean
+  + reservar() : void
+  + liberar() : void
+  + seSuperpone(inicio, fin) : boolean
+}
+
+class Reserva {
+  - id : UUID
+  - estudiante : Estudiante
+  - horario : HorarioDisponible
+  - estado : EstadoReserva
+  + confirmar() : void
+  + cancelar() : void
+  + reprogramar(nuevoHorario) : void
+  + completar() : void
+}
+
+enum EstadoReserva {
+  SOLICITADA
+  CONFIRMADA
+  REPROGRAMADA
+  CANCELADA
+  COMPLETADA
+}
+
+interface ReservaRepository {
+  + guardar(reserva) : Reserva
+  + buscarPorId(id) : Optional<Reserva>
+  + listar() : List<Reserva>
+}
+
+class MemoriaReservaRepository {
+  - reservas : Map<UUID, Reserva>
+}
+
+interface Notificador {
+  + enviar(usuario, mensaje) : void
+}
+
+class NotificadorConsola
+
+class ServicioReservas {
+  - reservaRepository : ReservaRepository
+  - notificador : Notificador
+  + solicitarTutoria(estudiante, horario) : Reserva
+  + confirmarReserva(id) : Reserva
+  + cancelarReserva(id) : Reserva
+  + reprogramarReserva(id, nuevoHorario) : Reserva
+  + completarReserva(id) : Reserva
+}
+
+Usuario <|-- Estudiante
+Usuario <|-- Docente
+Docente "1" *-- "0..*" HorarioDisponible : publica
+Estudiante "1" -- "0..*" Reserva : solicita
+HorarioDisponible "1" -- "0..1" Reserva : asignado a
+Reserva --> EstadoReserva : estado
+ReservaRepository <|.. MemoriaReservaRepository
+Notificador <|.. NotificadorConsola
+ServicioReservas --> ReservaRepository : depende de
+ServicioReservas --> Notificador : depende de
+ServicioReservas ..> Reserva : coordina
+ServicioReservas ..> HorarioDisponible : valida
+@enduml

@@ -1,0 +1,30 @@
+name: Ae3 Verification
+
+on:
+  push:
+    branches:
+      - ae3-incremento1
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Configure Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Compile and test
+        run: mvn -B clean test
+
+      - name: Run demonstration
+        run: java -cp target/classes edu.uees.tutorias.App

@@ -1,0 +1,153 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+
+abstract class Usuario {
+  - id : UUID
+  - nombre : String
+  - email : String
+}
+class Estudiante { - carrera : String }
+class Docente {
+  - especialidad : String
+  - horarios : List<HorarioDisponible>
+  + publicarHorario(inicio, fin) : HorarioDisponible
+}
+class HorarioDisponible {
+  - id : UUID
+  - docente : Docente
+  - inicio : LocalDateTime
+  - fin : LocalDateTime
+  - reservado : boolean
+  + estaDisponible() : boolean
+  + reservar() : void
+  + liberar() : void
+}
+class Reserva {
+  - id : UUID
+  - estudiante : Estudiante
+  - horario : HorarioDisponible
+  - estado : EstadoReserva
+  - tema : String
+  - observaciones : String
+  - enviarRecordatorio : boolean
+  + confirmar() : void
+  + cancelar() : void
+  + reprogramar(nuevoHorario) : void
+  + completar() : void
+}
+enum EstadoReserva {
+  SOLICITADA
+  CONFIRMADA
+  REPROGRAMADA
+  CANCELADA
+  COMPLETADA
+}
+
+class ReservaBuilder <<Builder>> {
+  - id : UUID
+  - estudiante : Estudiante
+  - horario : HorarioDisponible
+  - tema : String
+  - observaciones : String
+  - enviarRecordatorio : boolean
+  + estudiante(e) : ReservaBuilder
+  + horario(h) : ReservaBuilder
+  + tema(t) : ReservaBuilder
+  + observaciones(o) : ReservaBuilder
+  + enviarRecordatorio(v) : ReservaBuilder
+  + build() : Reserva
+}
+
+interface ReservaRepository {
+  + guardar(reserva) : Reserva
+  + buscarPorId(id) : Optional<Reserva>
+  + listar() : List<Reserva>
+}
+class MemoriaReservaRepository
+
+interface Notificador {
+  + enviar(usuario, mensaje) : void
+}
+class NotificadorConsola
+class NotificadorEmail
+class NotificadorSms
+class NotificadorWhatsApp
+class NotificadorPush
+
+abstract class NotificacionFactory <<Factory Method>> {
+  + crearNotificador() : Notificador
+  + notificar(usuario, mensaje) : void
+}
+class EmailFactory
+class SmsFactory
+class WhatsAppFactory
+class PushFactory
+
+interface PoliticaCancelacion <<Strategy>> {
+  + puedeCancelar(reserva) : boolean
+  + descripcion() : String
+}
+class CancelacionEstandar
+class CancelacionSoloSolicitada
+
+interface ReservaObserver <<Observer>> {
+  + actualizar(reserva, evento) : void
+}
+class NotificacionReservaObserver {
+  - notificador : Notificador
+}
+class AuditoriaReservaObserver
+
+class ServicioReservas {
+  - reservaRepository : ReservaRepository
+  - observers : List<ReservaObserver>
+  - politicaCancelacion : PoliticaCancelacion
+  + registrarObserver(observer) : void
+  + eliminarObserver(observer) : void
+  + cambiarPoliticaCancelacion(politica) : void
+  + solicitarTutoria(estudiante, horario) : Reserva
+  + confirmarReserva(id) : Reserva
+  + cancelarReserva(id) : Reserva
+  + reprogramarReserva(id, nuevoHorario) : Reserva
+  + completarReserva(id) : Reserva
+}
+
+Usuario <|-- Estudiante
+Usuario <|-- Docente
+Docente "1" *-- "0..*" HorarioDisponible : publica
+Estudiante "1" -- "0..*" Reserva : solicita
+HorarioDisponible "1" -- "0..1" Reserva : asignado a
+Reserva --> EstadoReserva : estado
+ReservaBuilder ..> Reserva : construye
+ReservaBuilder --> Estudiante
+ReservaBuilder --> HorarioDisponible
+
+ReservaRepository <|.. MemoriaReservaRepository
+Notificador <|.. NotificadorConsola
+Notificador <|.. NotificadorEmail
+Notificador <|.. NotificadorSms
+Notificador <|.. NotificadorWhatsApp
+Notificador <|.. NotificadorPush
+NotificacionFactory <|-- EmailFactory
+NotificacionFactory <|-- SmsFactory
+NotificacionFactory <|-- WhatsAppFactory
+NotificacionFactory <|-- PushFactory
+EmailFactory ..> NotificadorEmail : crea
+SmsFactory ..> NotificadorSms : crea
+WhatsAppFactory ..> NotificadorWhatsApp : crea
+PushFactory ..> NotificadorPush : crea
+
+PoliticaCancelacion <|.. CancelacionEstandar
+PoliticaCancelacion <|.. CancelacionSoloSolicitada
+ReservaObserver <|.. NotificacionReservaObserver
+ReservaObserver <|.. AuditoriaReservaObserver
+NotificacionReservaObserver --> Notificador : usa
+
+ServicioReservas --> ReservaRepository : depende de
+ServicioReservas --> PoliticaCancelacion : Strategy
+ServicioReservas "1" o-- "0..*" ReservaObserver : notifica
+ServicioReservas ..> ReservaBuilder : crea reservas
+ServicioReservas ..> Reserva : coordina
+@enduml
