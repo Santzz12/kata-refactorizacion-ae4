@@ -194,3 +194,13 @@ Rama de desarrollo del Ae3: `ae3-incremento1`.
 ## Declaración de uso de inteligencia artificial
 
 Durante el desarrollo se utilizaron herramientas de inteligencia artificial como apoyo para revisar la continuidad con Ae1 y Ae2, proponer e implementar la integración de patrones, revisar coherencia entre responsabilidades, código y UML y mejorar la documentación. El contenido fue revisado en relación con la consigna y debe ser ejecutado, comprendido y defendido por el estudiante antes de su entrega.
+
+## Actividad Ae4 — Kata de Refactorización
+
+### Refactorización aplicada sobre `ServicioReservas.java`:
+1. **Extract Constants**: Se reemplazaron cadenas mágicas de eventos por constantes públicas descriptivas (`EVENTO_SOLICITADA`, etc.).
+2. **Replace Nested Conditional with Guard Clauses**: Se aplanó el flujo de control aplicando retorno temprano (*fail-fast*) y eliminando bloques `else` tras excepciones.
+3. **Extract Method**: Se aislaron las responsabilidades de validación en `validarReprogramacion` y el ciclo de persistencia/notificación en `actualizarYNotificar`.
+
+### Comprobación de no regresión:
+- Suite de pruebas ejecutada con `mvn clean test`: 5/5 pruebas aprobadas exitosamente antes y después de los cambios.
